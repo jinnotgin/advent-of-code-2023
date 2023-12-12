@@ -2,7 +2,6 @@ import fs from "fs";
 import readline from "readline";
 
 const filePath = "./input.txt";
-
 const fileStream = fs.createReadStream(filePath);
 
 const rl = readline.createInterface({
