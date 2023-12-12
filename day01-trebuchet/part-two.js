@@ -60,9 +60,9 @@ function getCalibrationValue(str) {
 	}
 
 	const firstDigit = matches[0];
-	const LastDigit = matches[matches.length - 1];
+	const lastDigit = matches[matches.length - 1];
 
-	const calibrationValue = parseInt(`${firstDigit}${LastDigit}`);
+	const calibrationValue = parseInt(`${firstDigit}${lastDigit}`);
 	return calibrationValue;
 }
 
