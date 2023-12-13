@@ -83,7 +83,7 @@ function formBestHand(hand) {
 	const ARE_ALL_SINGLES = uniqueCards.length === handWithoutJokers.length;
 	const TWO_PAIR_ALREADY =
 		handWithoutJokers.length === 4 &&
-		Object.values(cardCount).filter((x) => x === 2).length === 2;
+		Object.values(cardCount).every((x) => x === 2);
 
 	if (ARE_ALL_SINGLES || TWO_PAIR_ALREADY) {
 		// make it the strongest 2 Pair (if all Singles), or Full House (if have TWO_PAIR already)
