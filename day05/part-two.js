@@ -145,9 +145,9 @@ function doesSeedExist(seedNo) {
 function findLowestLocationNo() {
 	let location = 0;
 	while (true) {
-		console.log(`\nProcesing location: ${location}`);
+		// console.log(`\nProcesing location: ${location}`);
 		const seedNo = findSeed(location);
-		console.log({ location, seedNo });
+		// console.log({ location, seedNo });
 
 		const SEED_EXIST = doesSeedExist(seedNo);
 		if (SEED_EXIST) {
