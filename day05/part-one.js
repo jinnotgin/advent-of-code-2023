@@ -82,7 +82,7 @@ function findDestination(sourceArea, destionationArea, sourceNo) {
 			mappingData;
 		if (
 			sourceNo >= sourceRangeStart &&
-			sourceNo <= sourceRangeStart + rangeLength
+			sourceNo < sourceRangeStart + rangeLength
 		) {
 			const diff = sourceNo - sourceRangeStart;
 			destinationNo = destinationRangeStart + diff;
