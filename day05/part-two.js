@@ -28,11 +28,6 @@ const mappingOrder = [
 	HUMIDITY,
 	LOCATION,
 ];
-const reverseMappingOrder = [...mappingOrder].reverse();
-
-// As you can probably guess, we are gonna map in reverse, by guessing all possible locations from 0
-// For each location, we check if the seed exists, rather than checking every seed one by one
-
 const data = {};
 
 let activeMap = null;
@@ -62,11 +57,11 @@ rl.on("line", (line) => {
 		data.seedsRange = [];
 		for (let i = 0; i < seedsData.length - 1; i = i + 2) {
 			const start = seedsData[i];
-			const length = seedsData[i + 1];
+			const rangeLength = seedsData[i + 1];
 
 			data.seedsRange.push({
 				start,
-				length,
+				rangeLength,
 			});
 		}
 		return;
@@ -81,81 +76,117 @@ rl.on("line", (line) => {
 	}
 });
 
-rl.on("close", () => {
-	console.log("Finished reading the file.");
-	console.log(data);
-
-	const lowestLocationNo = findLowestLocationNo();
-
-	console.log({ lowestLocationNo });
-});
-
-function findSource(destionationArea, sourceArea, destinationNo) {
+function findDestination(sourceArea, destionationArea, sourceNo) {
 	const mapKey = `${sourceArea}-to-${destionationArea}`;
-	// console.log(mapKey);
 
-	let sourceNo = null;
+	let destinationNo = null;
 
 	for (let mappingData of data[mapKey]) {
 		const { destinationRangeStart, sourceRangeStart, rangeLength } =
 			mappingData;
-		// console.log({ destinationRangeStart, sourceRangeStart, rangeLength });
 		if (
-			destinationNo >= destinationRangeStart &&
-			destinationNo <= destinationRangeStart + rangeLength
+			sourceNo >= sourceRangeStart &&
+			sourceNo <= sourceRangeStart + rangeLength
 		) {
-			const diff = destinationNo - destinationRangeStart;
-			sourceNo = sourceRangeStart + diff;
+			const diff = sourceNo - sourceRangeStart;
+			destinationNo = destinationRangeStart + diff;
 			break;
 		}
 	}
 
-	if (sourceNo === null) sourceNo = destinationNo;
+	if (destinationNo === null) destinationNo = sourceNo;
 
-	return sourceNo;
+	return destinationNo;
 }
 
-function findSeed(locationNo) {
-	let currentNo = locationNo; // begins with location
+function accountForMappingBoundaries(
+	sourceArea,
+	destionationArea,
+	initialStart,
+	initialRangeLength
+) {
+	const initialEnd = initialStart + initialRangeLength - 1;
+	const mapKey = `${sourceArea}-to-${destionationArea}`;
 
-	for (let i = 1; i < reverseMappingOrder.length; i++) {
-		const destionationArea = reverseMappingOrder[i - 1];
-		const sourceArea = reverseMappingOrder[i];
-
-		let sourceNo = findSource(destionationArea, sourceArea, currentNo);
-		// console.log(
-		// 	`${destionationArea}: ${currentNo} => ${sourceArea}: ${sourceNo}`
-		// );
-
-		currentNo = sourceNo;
+	const outputSet = new Set(); // using a set here to prevent duplicates
+	function buildOutput(start, end) {
+		outputSet.add(`${start}_${end}`);
 	}
 
-	return currentNo;
-}
+	for (let mappingData of data[mapKey]) {
+		const mappingStart = mappingData.sourceRangeStart;
+		const mappingRangeLength = mappingData.rangeLength;
+		const mappingEnd = mappingStart + mappingRangeLength - 1;
 
-function doesSeedExist(seedNo) {
-	let SEED_EXISTS = false;
-	for (let { start, length } of data.seedsRange) {
-		SEED_EXISTS = seedNo >= start && seedNo < start + length;
-		if (SEED_EXISTS) break;
-	}
-	return SEED_EXISTS;
-}
+		const INITIAL_SURROUNDS_MAPPING =
+			initialStart < mappingStart && initialEnd > mappingEnd;
+		const INITIAL_INTERSECTS_MAPPING_LEFT =
+			initialStart < mappingStart && initialEnd >= mappingStart;
+		const INITIAL_INTERSECTS_MAPPING_RIGHT =
+			initialStart <= mappingEnd && initialEnd > mappingEnd;
 
-function findLowestLocationNo() {
-	let location = 0;
-	while (true) {
-		// console.log(`\nProcesing location: ${location}`);
-		const seedNo = findSeed(location);
-		// console.log({ location, seedNo });
-
-		const SEED_EXIST = doesSeedExist(seedNo);
-		if (SEED_EXIST) {
-			console.log("Seed exists!");
-			return location;
+		if (INITIAL_SURROUNDS_MAPPING) {
+			buildOutput(initialStart, mappingStart - 1);
+			buildOutput(mappingStart, mappingEnd);
+			buildOutput(mappingEnd + 1, initialEnd);
+		} else if (INITIAL_INTERSECTS_MAPPING_LEFT) {
+			buildOutput(initialStart, mappingStart - 1);
+			buildOutput(mappingStart, initialEnd);
+		} else if (INITIAL_INTERSECTS_MAPPING_RIGHT) {
+			buildOutput(initialStart, mappingEnd);
+			buildOutput(mappingEnd + 1, initialEnd);
 		}
-		location++;
 	}
+	if (outputSet.size === 0) {
+		// not affected, ie intital does not intersect with mapping
+		buildOutput(initialStart, initialEnd);
+	}
+
+	const output = [...outputSet].map((item) => {
+		const [start, end] = item.split("_").map((x) => parseInt(x));
+		return { start: start, rangeLength: end - start + 1 };
+	});
+
+	return output;
 }
 
-// { lowestLocationNo:  1928058}
+function findAllSeedsLowestLocationNo() {
+	let current = data.seedsRange;
+
+	for (let i = 1; i < mappingOrder.length; i++) {
+		const sourceArea = mappingOrder[i - 1];
+		const destionationArea = mappingOrder[i];
+
+		const currentWithBoundaries = current
+			.map(({ start, rangeLength }) => {
+				return accountForMappingBoundaries(
+					sourceArea,
+					destionationArea,
+					start,
+					rangeLength
+				);
+			})
+			.flat();
+
+		const output = currentWithBoundaries.map(({ start, rangeLength }) => {
+			let destinationNo = findDestination(sourceArea, destionationArea, start);
+			return { start: destinationNo, rangeLength };
+		});
+
+		current = output;
+	}
+	const possibleLocations = current.map((x) => x.start);
+	possibleLocations.sort((a, b) => a - b);
+
+	return possibleLocations[0];
+}
+
+rl.on("close", () => {
+	console.log("Finished reading the file.");
+	// console.log(data);
+
+	const lowestLocationNo = findAllSeedsLowestLocationNo();
+	console.log({ lowestLocationNo });
+});
+
+// { lowestLocationNo: 1928058 }
