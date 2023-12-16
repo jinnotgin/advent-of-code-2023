@@ -400,10 +400,8 @@ function travelBetweenSqueezedPipes(
 	direction,
 	posWithNoDistance = []
 ) {
-	// this functions attempts teleport over the squeezed pipes, if any
-	// if there are no squeezed pipes, then returns nothing (null)
-
-	// const squeezeGrid = getSqueezeGrid(pos, direction, squeezeSide);
+	// this functions attempts travel over the squeezed pipes
+	// it will return with all "no distance" pos that it sees along the way
 
 	const current_posWithNoDistance = getNoDistancePosFromSqueezeGrid(
 		squeezeGrid,
