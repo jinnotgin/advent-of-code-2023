@@ -167,12 +167,12 @@ const pipeNextDirections = {
 	L: ["up", "right"],
 };
 
-function nextPos(c_pos, p_pos = []) {
+function nextPosInPipeLoop(c_pos, p_pos = []) {
 	// c = current, p = previous, n = next
 	const [c_x = null, c_y = null] = c_pos;
 	const [p_x = null, p_y = null] = p_pos;
 
-	// console.log("nextPos: Received", { c_x, c_y, p_x, p_y });
+	// console.log("nextPosInPipeLoop: Received", { c_x, c_y, p_x, p_y });
 	const c = getPipe(c_pos);
 	const [direction1, direction2] = pipeNextDirections[c];
 
@@ -180,7 +180,7 @@ function nextPos(c_pos, p_pos = []) {
 	const n2_pos = applyDirectionToPos(c_pos, direction2);
 
 	if (p_x !== null && p_y !== null) {
-		// console.log("nextPos: Evaluating between 2 possible next", {
+		// console.log("nextPosInPipeLoop: Evaluating between 2 possible next", {
 		// 	n1_pos,
 		// 	n2_pos,
 		// 	p_x,
@@ -189,10 +189,10 @@ function nextPos(c_pos, p_pos = []) {
 		const nPos = [n1_pos, n2_pos].filter(([x, y]) => {
 			return x !== p_x || y !== p_y;
 		})[0];
-		// console.log("nextPos: Given previous, the next is", { nPos });
+		// console.log("nextPosInPipeLoop: Given previous, the next is", { nPos });
 		return nPos;
 	} else {
-		// console.log("nextPos: No previous, so the 2 possible next is", { n1_pos, n2_pos });
+		// console.log("nextPosInPipeLoop: No previous, so the 2 possible next is", { n1_pos, n2_pos });
 		return [n1_pos, n2_pos];
 	}
 }
@@ -210,10 +210,10 @@ function travelInPipeLoop(
 	let n1_pos, n2_pos;
 	if (c_distance === 0) {
 		// just starting the maze
-		[n1_pos, n2_pos] = nextPos(c1_pos);
+		[n1_pos, n2_pos] = nextPosInPipeLoop(c1_pos);
 	} else {
-		n1_pos = nextPos(c1_pos, p1_pos);
-		n2_pos = nextPos(c2_pos, p2_pos);
+		n1_pos = nextPosInPipeLoop(c1_pos, p1_pos);
+		n2_pos = nextPosInPipeLoop(c2_pos, p2_pos);
 	}
 
 	// console.log("travelInPipeLoop: next positions are", { n1_pos, n2_pos });
