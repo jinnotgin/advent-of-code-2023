@@ -430,8 +430,8 @@ function travelBetweenSqueezedPipes(
 }
 
 function floodPos(pos) {
-	// floods current position (with distance -1) if its null
-	// returns an array of all possible next pos that can be flooded
+	// floods current position (with distance -1), given that it has no distance yet
+	// returns an array of all possible next positions that can be flooded
 
 	if (posHasNoDistance(pos) === false) {
 		// is a pipe loop
